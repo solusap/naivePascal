@@ -2,11 +2,17 @@
 #include <cstdio>
 #include <string>
 #include <iostream>
+#include <cctype>
 
 #include <fmt/core.h>
 #include <fmt/ranges.h>
 
 using fmt::print;
+
+bool m_isdigit(char ch)
+{
+    return std::isdigit(static_cast<char>(ch));
+}
 
 using std::string;
 class Interpreter
@@ -39,9 +45,10 @@ AbsToken* Interpreter::GetNextToken()
         return new EndOfFile();
     }
     char curChar = ttext[pos];
-    if (curChar == '=') {
+    if (m_isdigit(curChar)) {
+        auto token = new INTEGER(static_cast<int>(curChar - '0'));
         pos += 1;
-        return new INTEGER(curChar - '0');
+        return token;
     }
 
     if (curChar == '+') {
