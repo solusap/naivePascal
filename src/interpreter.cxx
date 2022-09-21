@@ -1,5 +1,7 @@
 #include "token.h"
 #include <cstdio>
+#include <cstdlib>
+#include <iterator>
 #include <string>
 #include <iostream>
 #include <cctype>
@@ -8,18 +10,17 @@
 #include <fmt/ranges.h>
 
 using fmt::print;
-
-bool m_isdigit(char ch)
-{
-    return std::isdigit(static_cast<char>(ch));
-}
-
 using std::string;
+
 class Interpreter
 {
     string text;
     AbsToken* curToken;
     size_t pos;
+    void advance();
+    void skip_whitespace();
+    string::iterator cur_char;
+    int build_integer();
 public:
     Interpreter(const string& str) : text(str), curToken(nullptr), pos(0) {};
 
@@ -33,8 +34,32 @@ public:
 AbsToken* Interpreter::Error()
 {
     print("Error in parsing input text!\n");
+    std::exit(1);
     return nullptr;
+}
 
+void Interpreter::advance()
+{
+    pos += 1;
+    if (pos >= text.length()) {
+        pos = std::string::npos;
+    }
+}
+
+void Interpreter::skip_whitespace()
+{
+    while (pos != std::string::npos && text[pos] == ' ') {
+        advance();
+    }
+}
+
+int Interpreter::build_integer()
+{
+    int start = pos;
+    while (pos != std::string::npos && std::isdigit(text[pos])) {
+        advance();
+    }
+    return std::stoi(text.substr(start, pos - start));
 }
 
 AbsToken* Interpreter::GetNextToken()
@@ -45,7 +70,7 @@ AbsToken* Interpreter::GetNextToken()
         return new EndOfFile();
     }
     char curChar = ttext[pos];
-    if (m_isdigit(curChar)) {
+    if (std::isdigit(curChar)) {
         auto token = new INTEGER(static_cast<int>(curChar - '0'));
         pos += 1;
         return token;
@@ -73,9 +98,15 @@ AbsToken* Interpreter::expr()
 {
     curToken = GetNextToken();
     INTEGER* left = dynamic_cast<INTEGER*>(curToken);
+    if (left == nullptr) {
+        return new EndOfFile();
+    }
     eat<INTEGER>();
     
     AbsToken* op = curToken;
+    if (left == nullptr) {
+        return new EndOfFile();
+    }
     eat<PLUS>();
 
     INTEGER* right = dynamic_cast<INTEGER*>(curToken);

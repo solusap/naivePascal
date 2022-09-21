@@ -7,6 +7,7 @@ using std::string;
 class TokenVisitor;
 struct INTEGER;
 struct PLUS;
+struct MINUS;
 struct EndOfFile;
 
 struct AbsToken 
@@ -20,6 +21,7 @@ public:
     TokenVisitor() = default;;
     virtual void VisitInt(INTEGER* node) = 0;
     virtual void VisitPlus(PLUS* node) = 0;
+    virtual void VisitMinus(MINUS* node) = 0;
     virtual void VisitEof(EndOfFile* node) = 0;
     virtual ~TokenVisitor() = default;
 };
@@ -42,6 +44,15 @@ struct PLUS: public AbsToken
     ~PLUS() = default;
 };
 
+struct MINUS: public AbsToken
+{
+    MINUS() = default;
+    void debug(TokenVisitor& v) {
+        v.VisitMinus(this);
+    }
+    ~MINUS() = default;
+};
+
 struct EndOfFile: public AbsToken
 {
     EndOfFile() {};
@@ -57,6 +68,7 @@ public:
     TokenDebugVisitor() = default;
     virtual void VisitInt(INTEGER* node) override;
     virtual void VisitPlus(PLUS* node) override;
+    virtual void VisitMinus(MINUS* node) override;
     virtual void VisitEof(EndOfFile* node) override;
     ~TokenDebugVisitor() = default;
 };

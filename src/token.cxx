@@ -18,3 +18,8 @@ void TokenDebugVisitor::VisitEof(EndOfFile *node)
 {
         print("TOKEN(EOF, NULL)\n");
 }
+
+void TokenDebugVisitor::VisitMinus(MINUS *node)
+{
+        print("TOKEN(MINUS, -)\n");
+}
