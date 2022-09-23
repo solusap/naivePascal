@@ -65,22 +65,25 @@ int Interpreter::build_integer()
 AbsToken* Interpreter::GetNextToken()
 {
     // 
-    const string& ttext = text;
-    if (pos > ttext.length() - 1) {
-        return new EndOfFile();
-    }
-    char curChar = ttext[pos];
-    if (std::isdigit(curChar)) {
-        auto token = new INTEGER(static_cast<int>(curChar - '0'));
-        pos += 1;
-        return token;
-    }
+    while (pos != std::string::npos) {
+        if (text[pos] == ' ') {
+            skip_whitespace();
+        }
+        if (std::isdigit(text[pos])) {
+            return new INTEGER(build_integer());
+        }
 
-    if (curChar == '+') {
-        pos += 1;
-        return new PLUS();
+        if (text[pos] == '+') {
+            advance();
+            return new PLUS();
+        }
+        if (text[pos] == '-') {
+            advance();
+            return new MINUS();
+        }
+        return Error();
     }
-    return Error();
+    return new EndOfFile();
 }
 
 
@@ -104,15 +107,19 @@ AbsToken* Interpreter::expr()
     eat<INTEGER>();
     
     AbsToken* op = curToken;
-    if (left == nullptr) {
-        return new EndOfFile();
+    if (IsTokenType<PLUS>(op)) {
+        eat<PLUS>();
+    } else {
+        eat<MINUS>();
     }
-    eat<PLUS>();
 
     INTEGER* right = dynamic_cast<INTEGER*>(curToken);
     eat<INTEGER>();
-
-    return new INTEGER(left->_val + right->_val);
+    if (IsTokenType<PLUS>(op)) {
+        return new INTEGER(left->_val + right->_val);
+    } else {
+        return new INTEGER(left->_val - right->_val);
+    }
 }
 
 int main()
