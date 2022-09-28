@@ -16,10 +16,20 @@ void TokenDebugVisitor::VisitPlus(PLUS *node)
 
 void TokenDebugVisitor::VisitEof(EndOfFile *node)
 {
-        print("TOKEN(EOF, NULL)\n");
+    print("TOKEN(EOF, NULL)\n");
 }
 
 void TokenDebugVisitor::VisitMinus(MINUS *node)
 {
-        print("TOKEN(MINUS, -)\n");
+    print("TOKEN(MINUS, -)\n");
+}
+
+void TokenDebugVisitor::VisitMul(MUL* node)
+{
+    print("TOKEN(MUL, *)\n");
+}
+
+void TokenDebugVisitor::VisitDiv(DIV* node)
+{
+    print("TOKEN(DIV, /)\n");
 }

@@ -8,6 +8,8 @@ class TokenVisitor;
 struct INTEGER;
 struct PLUS;
 struct MINUS;
+struct MUL;
+struct DIV;
 struct EndOfFile;
 
 struct AbsToken 
@@ -22,6 +24,8 @@ public:
     virtual void VisitInt(INTEGER* node) = 0;
     virtual void VisitPlus(PLUS* node) = 0;
     virtual void VisitMinus(MINUS* node) = 0;
+    virtual void VisitMul(MUL* node) = 0;
+    virtual void VisitDiv(DIV* node) = 0;
     virtual void VisitEof(EndOfFile* node) = 0;
     virtual ~TokenVisitor() = default;
 };
@@ -53,6 +57,24 @@ struct MINUS: public AbsToken
     ~MINUS() = default;
 };
 
+struct MUL: public AbsToken
+{
+    MUL() = default;
+    void debug(TokenVisitor& v) {
+        v.VisitMul(this);
+    }
+    ~MUL() = default;
+};
+
+struct DIV: public AbsToken
+{
+    DIV() = default;
+    void debug(TokenVisitor& v) {
+        v.VisitDiv(this);
+    }
+    ~DIV() = default;
+};
+
 struct EndOfFile: public AbsToken
 {
     EndOfFile() {};
@@ -69,6 +91,8 @@ public:
     virtual void VisitInt(INTEGER* node) override;
     virtual void VisitPlus(PLUS* node) override;
     virtual void VisitMinus(MINUS* node) override;
+    virtual void VisitMul(MUL* node) override;
+    virtual void VisitDiv(DIV* node) override;
     virtual void VisitEof(EndOfFile* node) override;
     ~TokenDebugVisitor() = default;
 };

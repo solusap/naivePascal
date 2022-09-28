@@ -12,33 +12,29 @@
 using fmt::print;
 using std::string;
 
-class Interpreter
+class Lexer
 {
     string text;
-    AbsToken* curToken;
     size_t pos;
+public:
+    Lexer(const string& str) : text(str), pos(0) {
+        fmt::print("lexer {}\n", text);
+    };
+    AbsToken* Error();
     void advance();
     void skip_whitespace();
-    string::iterator cur_char;
     int build_integer();
-public:
-    Interpreter(const string& str) : text(str), curToken(nullptr), pos(0) {};
-
-    // scanner or lexical analyzer
-    AbsToken* GetNextToken();
-    AbsToken* Error();
-    template<typename TOKENTYPE> void eat();
-    AbsToken* expr();
+    AbsToken* get_next_token();
 };
 
-AbsToken* Interpreter::Error()
+AbsToken* Lexer::Error()
 {
     print("Error in parsing input text!\n");
     std::exit(1);
     return nullptr;
 }
 
-void Interpreter::advance()
+void Lexer::advance()
 {
     pos += 1;
     if (pos >= text.length()) {
@@ -46,14 +42,14 @@ void Interpreter::advance()
     }
 }
 
-void Interpreter::skip_whitespace()
+void Lexer::skip_whitespace()
 {
     while (pos != std::string::npos && text[pos] == ' ') {
         advance();
     }
 }
 
-int Interpreter::build_integer()
+int Lexer::build_integer()
 {
     int start = pos;
     while (pos != std::string::npos && std::isdigit(text[pos])) {
@@ -62,12 +58,12 @@ int Interpreter::build_integer()
     return std::stoi(text.substr(start, pos - start));
 }
 
-AbsToken* Interpreter::GetNextToken()
+AbsToken* Lexer::get_next_token()
 {
-    // 
     while (pos != std::string::npos) {
         if (text[pos] == ' ') {
             skip_whitespace();
+            continue;
         }
         if (std::isdigit(text[pos])) {
             return new INTEGER(build_integer());
@@ -81,45 +77,76 @@ AbsToken* Interpreter::GetNextToken()
             advance();
             return new MINUS();
         }
+
+        if (text[pos] == '*') {
+            advance();
+            return new MUL();
+        }
+        if (text[pos] == '/') {
+            advance();
+            return new DIV();
+        }
         return Error();
     }
     return new EndOfFile();
 }
 
+class Interpreter
+{
+    Lexer lexer;
+    AbsToken* curToken;
+    AbsToken* Error();
+    string::iterator cur_char;
+    int factor();
+    
+public:
+    Interpreter(const string& str) :lexer(str) {
+        curToken = lexer.get_next_token();
+    };
+    
+    template<typename TOKENTYPE> void eat();
+    AbsToken* expr();
+};
+
+AbsToken* Interpreter::Error()
+{
+    print("Error in parsing input text!\n");
+    std::exit(1);
+    return nullptr;
+}
 
 template<typename TOKENTYPE>
 void Interpreter::eat()
 {
     if (IsTokenType<TOKENTYPE>(curToken)) {
-        this->curToken = GetNextToken();
+        this->curToken = lexer.get_next_token();
     } else {
         Error();
     }
 }
 
+int Interpreter::factor()
+{
+    auto token = this->curToken;
+    eat<INTEGER>();
+    INTEGER* itoken = dynamic_cast<INTEGER*>(token);
+    return itoken->_val;
+}
+
 AbsToken* Interpreter::expr()
 {
-    curToken = GetNextToken();
-    INTEGER* left = dynamic_cast<INTEGER*>(curToken);
-    if (left == nullptr) {
-        return new EndOfFile();
+    int res = factor();
+    while (IsTokenType<MUL>(curToken) || IsTokenType<DIV>(curToken)) {
+        auto t = curToken;
+        if (IsTokenType<MUL>(t)) {
+            eat<MUL>();
+            res *= factor();
+        } else if (IsTokenType<DIV>(t)) {
+            eat<DIV>();
+            res /= factor();
+        }
     }
-    eat<INTEGER>();
-    
-    AbsToken* op = curToken;
-    if (IsTokenType<PLUS>(op)) {
-        eat<PLUS>();
-    } else {
-        eat<MINUS>();
-    }
-
-    INTEGER* right = dynamic_cast<INTEGER*>(curToken);
-    eat<INTEGER>();
-    if (IsTokenType<PLUS>(op)) {
-        return new INTEGER(left->_val + right->_val);
-    } else {
-        return new INTEGER(left->_val - right->_val);
-    }
+    return new INTEGER(res);
 }
 
 int main()
