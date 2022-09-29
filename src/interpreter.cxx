@@ -98,6 +98,7 @@ class Interpreter
     AbsToken* Error();
     string::iterator cur_char;
     int factor();
+    int term();
     
 public:
     Interpreter(const string& str) :lexer(str) {
@@ -133,7 +134,7 @@ int Interpreter::factor()
     return itoken->_val;
 }
 
-AbsToken* Interpreter::expr()
+int Interpreter::term()
 {
     int res = factor();
     while (IsTokenType<MUL>(curToken) || IsTokenType<DIV>(curToken)) {
@@ -144,6 +145,21 @@ AbsToken* Interpreter::expr()
         } else if (IsTokenType<DIV>(t)) {
             eat<DIV>();
             res /= factor();
+        }
+    }
+    return res;
+}
+
+AbsToken* Interpreter::expr()
+{
+    int res = term();
+    while (IsTokenType<PLUS>(curToken) || IsTokenType<MINUS>(curToken)) {
+        if (IsTokenType<PLUS>(curToken)) {
+            eat<PLUS>();
+            res += term();
+        } else if (IsTokenType<MINUS>(curToken)) {
+            eat<MINUS>();
+            res -= term();
         }
     }
     return new INTEGER(res);
