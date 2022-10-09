@@ -33,3 +33,13 @@ void TokenDebugVisitor::VisitDiv(DIV* node)
 {
     print("TOKEN(DIV, /)\n");
 }
+
+void TokenDebugVisitor::VisitLParen(LPAREN* node)
+{
+    print("TOKEN(DIV, '(')\n");
+}
+
+void TokenDebugVisitor::VisitRParen(RPAREN* node)
+{
+    print("TOKEN(DIV, ')')\n");
+}

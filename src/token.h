@@ -10,11 +10,13 @@ struct PLUS;
 struct MINUS;
 struct MUL;
 struct DIV;
+struct LPAREN;
+struct RPAREN;
 struct EndOfFile;
 
 struct AbsToken 
 {
-    virtual void debug(TokenVisitor& v) = 0;     // accept
+    virtual void accept(TokenVisitor& v) = 0;     // accept
     virtual ~AbsToken() = default;
 };
 
@@ -27,6 +29,8 @@ public:
     virtual void VisitMul(MUL* node) = 0;
     virtual void VisitDiv(DIV* node) = 0;
     virtual void VisitEof(EndOfFile* node) = 0;
+    virtual void VisitLParen(LPAREN* node) = 0;
+    virtual void VisitRParen(RPAREN* node) = 0;
     virtual ~TokenVisitor() = default;
 };
 
@@ -35,14 +39,14 @@ struct INTEGER : public AbsToken
 {
     int _val;
     INTEGER(int x) : _val(x) {};
-    void debug(TokenVisitor& v) { v.VisitInt(this); }
+    void accept(TokenVisitor& v) { v.VisitInt(this); }
     ~INTEGER() = default;
 };
 
 struct PLUS: public AbsToken
 {
     PLUS() = default;
-    void debug(TokenVisitor& v) {
+    void accept(TokenVisitor& v) {
         v.VisitPlus(this);
     }
     ~PLUS() = default;
@@ -51,7 +55,7 @@ struct PLUS: public AbsToken
 struct MINUS: public AbsToken
 {
     MINUS() = default;
-    void debug(TokenVisitor& v) {
+    void accept(TokenVisitor& v) {
         v.VisitMinus(this);
     }
     ~MINUS() = default;
@@ -60,7 +64,7 @@ struct MINUS: public AbsToken
 struct MUL: public AbsToken
 {
     MUL() = default;
-    void debug(TokenVisitor& v) {
+    void accept(TokenVisitor& v) {
         v.VisitMul(this);
     }
     ~MUL() = default;
@@ -69,16 +73,34 @@ struct MUL: public AbsToken
 struct DIV: public AbsToken
 {
     DIV() = default;
-    void debug(TokenVisitor& v) {
+    void accept(TokenVisitor& v) {
         v.VisitDiv(this);
     }
     ~DIV() = default;
 };
 
+struct LPAREN: public AbsToken
+{
+    LPAREN() = default;
+    void accept(TokenVisitor& v) {
+        v.VisitLParen(this);
+    }
+    ~LPAREN() = default;
+};
+
+struct RPAREN: public AbsToken
+{
+    RPAREN() = default;
+    void accept(TokenVisitor& v) {
+        v.VisitRParen(this);
+    }
+    ~RPAREN() = default;
+};
+
 struct EndOfFile: public AbsToken
 {
     EndOfFile() {};
-    void debug(TokenVisitor& v) {
+    void accept(TokenVisitor& v) {
         v.VisitEof(this);
     }
     ~EndOfFile() = default;
@@ -94,6 +116,9 @@ public:
     virtual void VisitMul(MUL* node) override;
     virtual void VisitDiv(DIV* node) override;
     virtual void VisitEof(EndOfFile* node) override;
+    virtual void VisitLParen(LPAREN* node) override;
+    virtual void VisitRParen(RPAREN* node) override;
+
     ~TokenDebugVisitor() = default;
 };
 
