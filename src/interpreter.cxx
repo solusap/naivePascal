@@ -139,7 +139,13 @@ void Parser::eat()
 AST* Parser::factor()
 {
     auto token = this->curToken;
-    if (IsTokenType<INTEGER>(token)) {
+    if (IsTokenType<PLUS>(token)) {
+        eat<PLUS>();
+        return new UnaryOp(token, factor());
+    } else if (IsTokenType<MINUS>(token)) {
+        eat<MINUS>();
+        return new UnaryOp(token, factor());
+    } else if (IsTokenType<INTEGER>(token)) {
         eat<INTEGER>();
         return new Num(dynamic_cast<INTEGER*>(token));
     } else if (IsTokenType<LPAREN>(token)) {
