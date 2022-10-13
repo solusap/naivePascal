@@ -5,6 +5,7 @@
 #include <string>
 #include <iostream>
 #include <cctype>
+#include <map>
 
 #include <fmt/core.h>
 #include <fmt/ranges.h>
@@ -13,6 +14,8 @@
 
 using fmt::print;
 using std::string;
+
+std::map<string, AbsToken*> ReservedKeyWords;
 
 class Lexer
 {

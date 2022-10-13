@@ -9,37 +9,22 @@ void TokenDebugVisitor::VisitInt(INTEGER *node)
     print("TOKEN(INT, {})\n", node->_val);
 }
 
-void TokenDebugVisitor::VisitPlus(PLUS *node)
-{
-    print("TOKEN(PLUS, +)\n");
+#define REALIZE_DBG_VISITOR(TOKEN_TYPE, TOKEN_PRINT) \
+void TokenDebugVisitor::Visit##TOKEN_TYPE(TOKEN_TYPE* node)\
+{\
+    print("TOKEN("#TOKEN_TYPE", "#TOKEN_PRINT")\n"); \
 }
 
-void TokenDebugVisitor::VisitEof(EndOfFile *node)
-{
-    print("TOKEN(EOF, NULL)\n");
-}
-
-void TokenDebugVisitor::VisitMinus(MINUS *node)
-{
-    print("TOKEN(MINUS, -)\n");
-}
-
-void TokenDebugVisitor::VisitMul(MUL* node)
-{
-    print("TOKEN(MUL, *)\n");
-}
-
-void TokenDebugVisitor::VisitDiv(DIV* node)
-{
-    print("TOKEN(DIV, /)\n");
-}
-
-void TokenDebugVisitor::VisitLParen(LPAREN* node)
-{
-    print("TOKEN(DIV, '(')\n");
-}
-
-void TokenDebugVisitor::VisitRParen(RPAREN* node)
-{
-    print("TOKEN(DIV, ')')\n");
-}
+REALIZE_DBG_VISITOR(PLUS, "+")
+REALIZE_DBG_VISITOR(MINUS, "-")
+REALIZE_DBG_VISITOR(MUL, "*")
+REALIZE_DBG_VISITOR(DIV, "/")
+REALIZE_DBG_VISITOR(LPAREN, "(")
+REALIZE_DBG_VISITOR(RPAREN, ")")
+REALIZE_DBG_VISITOR(BEGIN, "BEGIN")
+REALIZE_DBG_VISITOR(END, "END")
+REALIZE_DBG_VISITOR(ID, "ID")
+REALIZE_DBG_VISITOR(SEMI, "SEMI")
+REALIZE_DBG_VISITOR(DOT, "DOT")
+REALIZE_DBG_VISITOR(ASSIGN, "ASSIGN")
+REALIZE_DBG_VISITOR(EndOfFile, "EOF");
