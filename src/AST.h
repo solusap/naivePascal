@@ -5,12 +5,19 @@
 #include <fmt/ranges.h>
 #include <limits>
 #include <functional>
+#include <string>
+#include <vector>
+#include <map>
 
 struct AST;
 struct ASTVisitor;
 struct BiOp;
 struct UnaryOp;
 struct Num;
+struct Compound;
+struct Assign;
+struct Var;
+struct NoOp;
 
 template<typename SubType, typename Type>
 bool IsSubType(Type* ptr)
@@ -24,12 +31,19 @@ struct AST
     virtual int accept(ASTVisitor* ast_visitor) = 0;
 };
 
+#define CONSTRUCT_AST_VISTFUNC(TYPE) \
+    virtual int Visit##TYPE(TYPE* node) = 0
+
 struct ASTVisitor
 {
     ASTVisitor() = default;
-    virtual int visit_BiOp(BiOp* ast) = 0;
-    virtual int visit_Num(Num* ast) = 0;
-    virtual int visit_UnaryOp(UnaryOp* ast) = 0;
+    CONSTRUCT_AST_VISTFUNC(BiOp);
+    CONSTRUCT_AST_VISTFUNC(Num);
+    CONSTRUCT_AST_VISTFUNC(UnaryOp);
+    CONSTRUCT_AST_VISTFUNC(Compound);
+    CONSTRUCT_AST_VISTFUNC(Assign);
+    CONSTRUCT_AST_VISTFUNC(Var);
+    CONSTRUCT_AST_VISTFUNC(NoOp);
 };
 
 struct BiOp : public AST
@@ -39,7 +53,7 @@ struct BiOp : public AST
     AbsToken* op;
     BiOp(AST* l, AST* r, AbsToken* op) : left(l), right(r), op(op) {}
     int accept(ASTVisitor* visitor) override {
-        return visitor->visit_BiOp(this);
+        return visitor->VisitBiOp(this);
     }
 };
 
@@ -51,7 +65,7 @@ struct Num : public AST
         value = num->_val;
     }
     int accept(ASTVisitor* visitor) override {
-        return visitor->visit_Num(this);
+        return visitor->VisitNum(this);
     }
 };
 
@@ -62,58 +76,66 @@ struct UnaryOp: public AST
 
     UnaryOp(AbsToken* op, AST* expr) : op(op), expr(expr) {}
     int accept(ASTVisitor* visitor) override {
-        return visitor->visit_UnaryOp(this);
+        return visitor->VisitUnaryOp(this);
     }
 };
+
+struct Compound: public AST
+{
+    std::vector<AST*> children;
+    virtual int accept(ASTVisitor* ast_visitor) override;
+    Compound();
+    Compound(const std::vector<AST*> nodes) : children(nodes) {}
+};
+
+struct Assign: public AST
+{
+    AST* left;      // should be Var
+    AST* right;     // should be Num
+    AbsToken* op;   // should be ASSIGN
+    Assign(AST* left, AST* right, AbsToken* op) : left(left), right(right), op(op) {}
+    virtual int accept(ASTVisitor* ast_visitor) override;
+};
+
+struct Var: public AST
+{
+    AbsToken* token;
+    string value;
+    Var(AbsToken* t,string val) : token(t), value(val) {}
+    Var(AbsToken* t) : token(t) {
+        value = dynamic_cast<ID*>(t)->id;
+    }
+    virtual int accept(ASTVisitor* ast_visitor) override;
+};
+
+struct NoOp: public AST
+{
+    NoOp() = default;
+    virtual int accept(ASTVisitor* ast_visitor) override;
+};
+
+#define CONSTRUCT_AST_VISTFUNC_OVERRRIDE(TYPE) \
+    virtual int Visit##TYPE(TYPE* node) override
 
 struct ASTVisitValue : public ASTVisitor
 {
-    virtual int visit_BiOp(BiOp* biop) override;
-    virtual int visit_Num(Num* num) override;
-    virtual int visit_UnaryOp(UnaryOp* unaryop) override;
+    std::map<string, AST*> GLOBAL_SCOPE;
+
+    CONSTRUCT_AST_VISTFUNC_OVERRRIDE(BiOp);
+    CONSTRUCT_AST_VISTFUNC_OVERRRIDE(Num);
+    CONSTRUCT_AST_VISTFUNC_OVERRRIDE(UnaryOp);
+    CONSTRUCT_AST_VISTFUNC_OVERRRIDE(Compound);
+    CONSTRUCT_AST_VISTFUNC_OVERRRIDE(Assign);
+    CONSTRUCT_AST_VISTFUNC_OVERRRIDE(Var);
+    CONSTRUCT_AST_VISTFUNC_OVERRRIDE(NoOp);
     std::function<int(AST* b)> vis = [=](AST* b) -> int {
         if (IsSubType<BiOp, AST>(b)) {
-            return visit_BiOp(dynamic_cast<BiOp*>(b));
+            return VisitBiOp(dynamic_cast<BiOp*>(b));
         } else if (IsSubType<Num, AST>(b)) {
-            return visit_Num(dynamic_cast<Num*>(b));
+            return VisitNum(dynamic_cast<Num*>(b));
         } else {
-            return visit_UnaryOp(dynamic_cast<UnaryOp*>(b));
+            return VisitUnaryOp(dynamic_cast<UnaryOp*>(b));
         }
     };
 };
-
-int ASTVisitValue::visit_Num(Num* num)
-{
-    return num->value;
-}
-
-int ASTVisitValue::visit_BiOp(BiOp* biop)
-{
-    
-    int l = vis(biop->left);
-    int r = vis(biop->right);
-    if (IsTokenType<MUL>(biop->op)) {
-        return l * r;
-    }
-    if (IsTokenType<PLUS>(biop->op)) {
-        return l + r;
-    }
-    if (IsTokenType<MINUS>(biop->op)) {
-        return l - r;
-    }
-    if (IsTokenType<DIV>(biop->op)) {
-        return l / r;
-    }
-    fmt::print("unknown operator l = {}, r = {}\n!", l, r);
-    return std::numeric_limits<int>::max();
-}
-
-int ASTVisitValue::visit_UnaryOp(UnaryOp *unaryop)
-{
-    if (IsSubType<MINUS, AbsToken>(unaryop->op)) {
-        return -vis(unaryop->expr);
-    } else {
-        return vis(unaryop->expr);
-    }
-}
 #endif

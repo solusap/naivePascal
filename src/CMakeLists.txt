@@ -1,16 +1,12 @@
 project(token)
 cmake_minimum_required(VERSION 3.16)
 
+set(CMAKE_VERBOSE_MAKEFILE ON)
 
 set(CMAKE_CXX_COMPILER /usr/bin/clang++)
 set(CMAKE_C_COMPILER clang)
-file(GLOB src_list "./" "token.cxx")
 
-file(GLOB intp "./" "interpreter.cxx")
-
-add_library(token
-    ${src_list}
-)
+file(GLOB intp "./" "*.cxx")
 
 add_executable(interpreter
     ${intp}
@@ -31,6 +27,5 @@ target_link_libraries(interpreter
     dl
     rt
     asan.a
-    token
     fmt.a
 )

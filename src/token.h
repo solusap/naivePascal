@@ -67,7 +67,6 @@ CONSTRUCT_TOKEN_TYPE(RPAREN);
 CONSTRUCT_TOKEN_TYPE(EndOfFile);
 CONSTRUCT_TOKEN_TYPE(BEGIN);
 CONSTRUCT_TOKEN_TYPE(END);
-CONSTRUCT_TOKEN_TYPE(ID);
 CONSTRUCT_TOKEN_TYPE(SEMI);
 CONSTRUCT_TOKEN_TYPE(DOT);
 CONSTRUCT_TOKEN_TYPE(ASSIGN);
@@ -78,6 +77,14 @@ struct INTEGER : public AbsToken
     INTEGER(int x) : _val(x) {};
     void accept(TokenVisitor& v) { v.VisitInt(this); }
     ~INTEGER() = default;
+};
+
+struct ID : public AbsToken
+{
+    string id;
+    ID(const string& inid) : id(inid) {};
+    void accept(TokenVisitor& v) { v.VisitID(this); }
+    ~ID() = default;
 };
 
 #define CONSTRUCT_DBG_VISTFUNC(TYPE) \
@@ -108,6 +115,5 @@ bool IsTokenType(AbsToken* token)
 {
     return dynamic_cast<TOKENTYPE* >(token) != nullptr;
 }
-
 
 #endif
