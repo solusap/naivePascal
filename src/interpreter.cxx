@@ -5,34 +5,48 @@
 #include <string>
 #include <iostream>
 #include <cctype>
-
+#include <cstdlib>
+#include <fmt/core.h>
+#include <fmt/ranges.h>
 #include "parser.h"
 
 struct Interpreter
 {
     string text;
-    Interpreter(const string& t) : text(t) {}
-    int interpreter()
+    Parser parser;
+    Interpreter(const string& t) : text(t), parser(text) {}
+    void interpreter()
     {
         Parser parser(text);
         ASTVisitValue visitor;
-        auto ptr = parser.expr();
-        return ptr->accept(&visitor);
+        auto ptr = parser.parse();
+        visitor.vis(ptr);
+        for (auto&& p : visitor.GLOBAL_SCOPE) {
+            fmt::print("{} = {}\n", p.first, p.second);
+        }
     }   
 };
 
+void test1()
+{
+    string text = R"( BEGIN
+     BEGIN
+         number := 2;
+         a := number;
+         b := 10 * a + 10 * number / 4;
+         c := a - - b
+     END;
+
+     x := 11;
+ END.)";
+    Interpreter intep{text};
+    TokenDebugVisitor visit;
+    ASTVisitValue visitor_value;
+
+    intep.interpreter();
+}
+
 int main()
 {
-    for(;;) {
-        fmt::print("cal>");
-        string text;
-        getline(std::cin, text);
-        fmt::print("input is {}\n", text);
-        Interpreter intep{text};
-        TokenDebugVisitor visit;
-        ASTVisitValue visitor_value;
-
-        auto result = intep.interpreter();
-        fmt::print("{}\n", result);
-    }
+    test1();
 }

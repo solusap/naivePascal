@@ -15,17 +15,20 @@ add_executable(interpreter
 target_compile_options(interpreter PUBLIC
     -g
     -O1
-    -fsanitize=address
+    #-fsanitize=address
     -fno-omit-frame-pointer
     -Wall
     -stdlib=libstdc++
 )
 
+target_link_options(interpreter PUBLIC
+    -rdynamic
+)
 
 target_link_libraries(interpreter
     pthread
     dl
     rt
-    asan.a
+    #asan.a
     fmt.a
 )

@@ -7,10 +7,10 @@
 using  ID_MAP = std::map<string, AbsToken*>;
 class Lexer
 {
+public:    
     string text;
     size_t pos;
     char peek();
-public:
     ID_MAP reserved_id;
     Lexer(const string& str);
     AbsToken* Error();

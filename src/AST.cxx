@@ -1,5 +1,7 @@
 #include "AST.h"
 
+#include <fmt/core.h>
+#include <fmt/ranges.h>
 int ASTVisitValue::VisitNum(Num* num)
 {
     return num->value;
@@ -51,17 +53,16 @@ int ASTVisitValue::VisitCompound(Compound *node)
 int ASTVisitValue::VisitAssign(Assign *node)
 {
     string var_name = dynamic_cast<Var*>(node->left)->value;
-    GLOBAL_SCOPE.insert({var_name, node->right});
+    GLOBAL_SCOPE.insert({var_name, vis(node->right)});
     return 0;
 }
 
 int ASTVisitValue::VisitVar(Var *node)
-{
-    string var_name = dynamic_cast<ID*>(node)->id;
-    
-    if (GLOBAL_SCOPE.count(var_name) == 0) {
-        fmt::print("var {} undefined!\n", var_name);
+{    
+    if (GLOBAL_SCOPE.count(node->value) == 0) {
+        fmt::print("var {} undefined!\n", node->value);
+        exit(1);
     }
-    GLOBAL_SCOPE.at(var_name);
-    return 0;
+    
+    return GLOBAL_SCOPE.at(node->value);;
 }

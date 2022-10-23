@@ -1,8 +1,6 @@
 #ifndef _AST_H_
 #define _AST_H_
 #include "token.h"
-#include <fmt/core.h>
-#include <fmt/ranges.h>
 #include <limits>
 #include <functional>
 #include <string>
@@ -83,9 +81,11 @@ struct UnaryOp: public AST
 struct Compound: public AST
 {
     std::vector<AST*> children;
-    virtual int accept(ASTVisitor* ast_visitor) override;
     Compound();
     Compound(const std::vector<AST*> nodes) : children(nodes) {}
+    virtual int accept(ASTVisitor* visitor) override{
+        return visitor->VisitCompound(this);
+    }
 };
 
 struct Assign: public AST
@@ -94,7 +94,9 @@ struct Assign: public AST
     AST* right;     // should be Num
     AbsToken* op;   // should be ASSIGN
     Assign(AST* left, AST* right, AbsToken* op) : left(left), right(right), op(op) {}
-    virtual int accept(ASTVisitor* ast_visitor) override;
+    virtual int accept(ASTVisitor* visitor) override{
+        return visitor->VisitAssign(this);
+    }
 };
 
 struct Var: public AST
@@ -105,13 +107,17 @@ struct Var: public AST
     Var(AbsToken* t) : token(t) {
         value = dynamic_cast<ID*>(t)->id;
     }
-    virtual int accept(ASTVisitor* ast_visitor) override;
+    virtual int accept(ASTVisitor* visitor) override{
+        return visitor->VisitVar(this);
+    }
 };
 
 struct NoOp: public AST
 {
     NoOp() = default;
-    virtual int accept(ASTVisitor* ast_visitor) override;
+    virtual int accept(ASTVisitor* visitor) override{
+        return visitor->VisitNoOp(this);
+    }
 };
 
 #define CONSTRUCT_AST_VISTFUNC_OVERRRIDE(TYPE) \
@@ -119,7 +125,7 @@ struct NoOp: public AST
 
 struct ASTVisitValue : public ASTVisitor
 {
-    std::map<string, AST*> GLOBAL_SCOPE;
+    std::map<string, int> GLOBAL_SCOPE;
 
     CONSTRUCT_AST_VISTFUNC_OVERRRIDE(BiOp);
     CONSTRUCT_AST_VISTFUNC_OVERRRIDE(Num);
@@ -133,9 +139,18 @@ struct ASTVisitValue : public ASTVisitor
             return VisitBiOp(dynamic_cast<BiOp*>(b));
         } else if (IsSubType<Num, AST>(b)) {
             return VisitNum(dynamic_cast<Num*>(b));
-        } else {
+        } else if (IsSubType<Compound, AST>(b)) {
+            return VisitCompound(dynamic_cast<Compound*>(b));
+        } else if (IsSubType<UnaryOp, AST>(b)) {
             return VisitUnaryOp(dynamic_cast<UnaryOp*>(b));
+        } else if (IsSubType<Assign, AST>(b)) {
+            return VisitAssign(dynamic_cast<Assign*>(b));
+        } else if (IsSubType<Var, AST>(b)) {
+            return VisitVar(dynamic_cast<Var*>(b));
+        } else if (IsSubType<NoOp, AST>(b)) {
+            return VisitNoOp(dynamic_cast<NoOp*>(b));
         }
+        return 0;
     };
 };
 #endif

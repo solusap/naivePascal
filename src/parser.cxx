@@ -14,8 +14,7 @@ using std::string;
 
 AST* Parser::Error()
 {
-    print("Error in parsing input text!\n");
-    std::exit(1);
+    lexer.Error();
     return nullptr;
 }
 

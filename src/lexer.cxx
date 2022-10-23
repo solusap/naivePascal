@@ -2,8 +2,21 @@
 #include "lexer.h"
 #include <cctype>
 #include <fmt/core.h>
+#include <execinfo.h>
 
 using fmt::print;
+
+void print_stacktrace()
+{
+    int size=16;
+    void*array[16];
+    int stack_num = backtrace(array,size);
+    char**stacktrace= backtrace_symbols(array,stack_num);
+    for(int i=0;i < stack_num; ++i){
+        print("{}\n",stacktrace[i]);
+    }
+    free(stacktrace);
+}
 
 Lexer::Lexer(const string& str) : text(str), pos(0) { 
         reserved_id["BEGIN"] = new BEGIN();
@@ -12,7 +25,8 @@ Lexer::Lexer(const string& str) : text(str), pos(0) {
 
 AbsToken* Lexer::Error()
 {
-    print("Error in parsing input text!\n");
+    print_stacktrace();
+    print("Error in parsing input text at {}, {}!\n", pos, text.at(pos));
     std::exit(1);
     return nullptr;
 }
@@ -107,7 +121,9 @@ AbsToken* Lexer::get_next_token()
             case '.':
                 advance();
                 return new DOT();
-            
+            case '\n':
+                advance();
+                continue;            
             default:
                 break;
         }
