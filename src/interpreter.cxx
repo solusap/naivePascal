@@ -1,3 +1,4 @@
+#include "AST.h"
 #include "token.h"
 #include <cstdio>
 #include <cstdlib>
@@ -46,7 +47,28 @@ void test1()
     intep.interpreter();
 }
 
+void test_draw()
+{
+        string text = R"( BEGIN
+     BEGIN
+         number := 2;
+         a := number;
+         b := 10 * a + 10 * number / 4;
+         c := a - - b
+     END;
+
+     x := 11;
+ END.)";
+    Parser parser{text};
+    auto tree = parser.parse();
+    ASTDraw visitor;
+    visitor.vis(tree);
+    visitor.dot_body += "}";
+    fmt::print("{}\n", visitor.dot_body);
+}
+
 int main()
 {
-    test1();
+    // test1();
+    test_draw();
 }

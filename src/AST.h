@@ -153,4 +153,50 @@ struct ASTVisitValue : public ASTVisitor
         return 0;
     };
 };
+
+struct ASTDraw: public ASTVisitor
+{
+    int cnt = 1;
+    string dot_body = R"(digraph astgraph {
+    node [shape=circle, fontsize=12, fontname="Courier", height=.1];
+    ranksep=.3;
+    edge [arrowsize=.5]
+    
+)";
+    CONSTRUCT_AST_VISTFUNC_OVERRRIDE(BiOp);
+    CONSTRUCT_AST_VISTFUNC_OVERRRIDE(Num);
+    CONSTRUCT_AST_VISTFUNC_OVERRRIDE(UnaryOp);
+    CONSTRUCT_AST_VISTFUNC_OVERRRIDE(Compound);
+    CONSTRUCT_AST_VISTFUNC_OVERRRIDE(Assign);
+    CONSTRUCT_AST_VISTFUNC_OVERRRIDE(Var);
+    CONSTRUCT_AST_VISTFUNC_OVERRRIDE(NoOp);
+    std::function<int(AST* b)> vis = [=](AST* b) -> int {
+        if (IsSubType<BiOp, AST>(b)) {
+            return VisitBiOp(dynamic_cast<BiOp*>(b));
+        } else if (IsSubType<Num, AST>(b)) {
+            return VisitNum(dynamic_cast<Num*>(b));
+        } else if (IsSubType<Compound, AST>(b)) {
+            return VisitCompound(dynamic_cast<Compound*>(b));
+        } else if (IsSubType<UnaryOp, AST>(b)) {
+            return VisitUnaryOp(dynamic_cast<UnaryOp*>(b));
+        } else if (IsSubType<Assign, AST>(b)) {
+            return VisitAssign(dynamic_cast<Assign*>(b));
+        } else if (IsSubType<Var, AST>(b)) {
+            return VisitVar(dynamic_cast<Var*>(b));
+        } else if (IsSubType<NoOp, AST>(b)) {
+            return VisitNoOp(dynamic_cast<NoOp*>(b));
+        }
+        return 0;
+    };
+    string GenDot();
+
+    string GetOp(AbsToken *abs) {
+        if (IsTokenType<MUL>(abs)) { return "*"; }
+        if (IsTokenType<PLUS>(abs)) { return "+"; }
+        if (IsTokenType<MINUS>(abs)) { return "-"; }
+        if (IsTokenType<DIV>(abs)) { return "/"; }
+        if (IsTokenType<ASSIGN>(abs)) { return ":="; }
+        return "";
+    }
+};
 #endif
