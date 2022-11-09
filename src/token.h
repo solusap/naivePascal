@@ -4,12 +4,11 @@
 
 using std::string;
 
-class TokenVisitor;
-struct INTEGER;
+struct INTEGER_CONSTANT;
 struct PLUS;
 struct MINUS;
 struct MUL;
-struct DIV;
+struct INTEGER_DIV;
 struct LPAREN;
 struct RPAREN;
 struct EndOfFile;
@@ -19,49 +18,30 @@ struct ID;
 struct SEMI;
 struct DOT;
 struct ASSIGN;
+struct PROGRAM;
+struct VAR;
+struct COLON; // :
+struct COMMA; // ;
+struct INTEGER;
+struct REAL;
+struct REAL_CONST;
+struct FLOAT_DIV;
 
 struct AbsToken 
 {
-    virtual void accept(TokenVisitor& v) = 0;     // accept
     virtual ~AbsToken() = default;
-};
-
-#define CONSTRUCT_BASE_VISTFUNC(TYPE) \
-    virtual void Visit##TYPE(TYPE* node) = 0
-
-class TokenVisitor {
-public:
-    TokenVisitor() = default;;
-    virtual void VisitInt(INTEGER* node) = 0;
-    CONSTRUCT_BASE_VISTFUNC(PLUS);
-    CONSTRUCT_BASE_VISTFUNC(MINUS);
-    CONSTRUCT_BASE_VISTFUNC(MUL);
-    CONSTRUCT_BASE_VISTFUNC(DIV);
-    CONSTRUCT_BASE_VISTFUNC(EndOfFile);
-    CONSTRUCT_BASE_VISTFUNC(LPAREN);
-    CONSTRUCT_BASE_VISTFUNC(RPAREN);
-    CONSTRUCT_BASE_VISTFUNC(BEGIN);
-    CONSTRUCT_BASE_VISTFUNC(END);
-    CONSTRUCT_BASE_VISTFUNC(ID);
-    CONSTRUCT_BASE_VISTFUNC(SEMI);
-    CONSTRUCT_BASE_VISTFUNC(DOT);
-    CONSTRUCT_BASE_VISTFUNC(ASSIGN);
-    virtual ~TokenVisitor() = default;
 };
 
 #define CONSTRUCT_TOKEN_TYPE(TOKEN_TYPE) \
 struct TOKEN_TYPE : public AbsToken {\
     TOKEN_TYPE() = default; \
-    virtual void accept(TokenVisitor& v) override { \
-        v.Visit##TOKEN_TYPE(this); \
-    } \
     ~TOKEN_TYPE() = default; \
-}
+}; \
 
 CONSTRUCT_TOKEN_TYPE(PLUS);
 CONSTRUCT_TOKEN_TYPE(MINUS);
 CONSTRUCT_TOKEN_TYPE(MUL);
-CONSTRUCT_TOKEN_TYPE(DIV);
+CONSTRUCT_TOKEN_TYPE(INTEGER_DIV);
 CONSTRUCT_TOKEN_TYPE(LPAREN);
 CONSTRUCT_TOKEN_TYPE(RPAREN);
 CONSTRUCT_TOKEN_TYPE(EndOfFile);
@@ -70,44 +50,35 @@ CONSTRUCT_TOKEN_TYPE(END);
 CONSTRUCT_TOKEN_TYPE(SEMI);
 CONSTRUCT_TOKEN_TYPE(DOT);
 CONSTRUCT_TOKEN_TYPE(ASSIGN);
+CONSTRUCT_TOKEN_TYPE(PROGRAM);
+CONSTRUCT_TOKEN_TYPE(VAR);
+CONSTRUCT_TOKEN_TYPE(COLON);
+CONSTRUCT_TOKEN_TYPE(COMMA);
+CONSTRUCT_TOKEN_TYPE(INTEGER);
+CONSTRUCT_TOKEN_TYPE(REAL);
+CONSTRUCT_TOKEN_TYPE(FLOAT_DIV);
 
-struct INTEGER : public AbsToken
+struct INTEGER_CONSTANT : public AbsToken
 {
     int _val;
-    INTEGER(int x) : _val(x) {};
-    void accept(TokenVisitor& v) { v.VisitInt(this); }
-    ~INTEGER() = default;
+    INTEGER_CONSTANT(int x) : _val(x) {};
+    INTEGER_CONSTANT() : _val(0) {};
+       ~INTEGER_CONSTANT() = default;
+};
+
+struct REAL_CONST : public AbsToken
+{
+    double _val;
+    REAL_CONST(double x) : _val(x) {};
+    REAL_CONST() : _val(0.0) {};
+       ~REAL_CONST() = default;
 };
 
 struct ID : public AbsToken
 {
     string id;
     ID(const string& inid) : id(inid) {};
-    void accept(TokenVisitor& v) { v.VisitID(this); }
-    ~ID() = default;
-};
-
-#define CONSTRUCT_DBG_VISTFUNC(TYPE) \
-    virtual void Visit##TYPE(TYPE* node) override
-
-class TokenDebugVisitor : public TokenVisitor{
-public:
-    TokenDebugVisitor() = default;
-    virtual void VisitInt(INTEGER* node) override;
-    CONSTRUCT_DBG_VISTFUNC(PLUS);
-    CONSTRUCT_DBG_VISTFUNC(MINUS);
-    CONSTRUCT_DBG_VISTFUNC(MUL);
-    CONSTRUCT_DBG_VISTFUNC(DIV);
-    CONSTRUCT_DBG_VISTFUNC(EndOfFile);
-    CONSTRUCT_DBG_VISTFUNC(LPAREN);
-    CONSTRUCT_DBG_VISTFUNC(RPAREN);
-    CONSTRUCT_DBG_VISTFUNC(BEGIN);
-    CONSTRUCT_DBG_VISTFUNC(END);
-    CONSTRUCT_DBG_VISTFUNC(ID);
-    CONSTRUCT_DBG_VISTFUNC(SEMI);
-    CONSTRUCT_DBG_VISTFUNC(DOT);
-    CONSTRUCT_DBG_VISTFUNC(ASSIGN);
-    ~TokenDebugVisitor() = default;
+       ~ID() = default;
 };
 
 template<typename TOKENTYPE>

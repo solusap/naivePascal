@@ -23,7 +23,7 @@ struct Interpreter
         auto ptr = parser.parse();
         visitor.vis(ptr);
         for (auto&& p : visitor.GLOBAL_SCOPE) {
-            fmt::print("{} = {}\n", p.first, p.second);
+            fmt::print("{} = {}\n", p.first, p.second._dvalue);
         }
     }   
 };
@@ -41,7 +41,6 @@ void test1()
      x := 11;
  END.)";
     Interpreter intep{text};
-    TokenDebugVisitor visit;
     ASTVisitValue visitor_value;
 
     intep.interpreter();
@@ -67,8 +66,29 @@ void test_draw()
     fmt::print("{}\n", visitor.dot_body);
 }
 
+void test_draw2()
+{
+    string text = R"(PROGRAM Part10AST;
+VAR
+   a, b : INTEGER;
+   y    : REAL;
+
+BEGIN {Part10AST}
+   a := 2;
+   b := 10 * a + 10 * a DIV 4;
+   y := 20 / 7 + 3.14;
+END.  {Part10AST})";
+    Parser parser{text};
+    auto tree = parser.parse();
+    ASTDraw visitor;
+    visitor.vis(tree);
+    visitor.dot_body += "}";
+    fmt::print("{}\n", visitor.dot_body);
+
+}
+
 int main()
 {
     // test1();
-    test_draw();
+    test_draw2();
 }

@@ -1,4 +1,13 @@
-program : compound_statement DOT
+program : PROGRAM variable SEMI block DOT
+
+block : declarations compound_statement
+
+declarations : VAR (variable_declaration SEMI)+
+              | empty
+
+variable_declaration : ID (COMMA ID)* COLON type_spec
+
+type_spec : INTEGER | REAL
 
 compound_statement : BEGIN statement_list END
 
@@ -13,13 +22,14 @@ assignment_statement : variable ASSIGN expr
 
 empty :
 
-expr: term ((PLUS | MINUS) term)*
+expr : term ((PLUS | MINUS) term)*
 
-term: factor ((MUL | DIV) factor)*
+term : factor ((MUL | INTEGER_DIV | FLOAT_DIV) factor)*
 
 factor : PLUS factor
        | MINUS factor
-       | INTEGER
+       | INTEGER_CONST
+       | REAL_CONST
        | LPAREN expr RPAREN
        | variable
 

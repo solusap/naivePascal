@@ -16,6 +16,15 @@ struct Compound;
 struct Assign;
 struct Var;
 struct NoOp;
+struct Program;
+struct Block;
+struct VarDecl;
+struct Type;
+
+union NumValue {
+    int _value;
+    double _dvalue;
+};
 
 template<typename SubType, typename Type>
 bool IsSubType(Type* ptr)
@@ -42,6 +51,10 @@ struct ASTVisitor
     CONSTRUCT_AST_VISTFUNC(Assign);
     CONSTRUCT_AST_VISTFUNC(Var);
     CONSTRUCT_AST_VISTFUNC(NoOp);
+    CONSTRUCT_AST_VISTFUNC(Program);
+    CONSTRUCT_AST_VISTFUNC(Block);
+    CONSTRUCT_AST_VISTFUNC(VarDecl);
+    CONSTRUCT_AST_VISTFUNC(Type);
 };
 
 struct BiOp : public AST
@@ -57,10 +70,15 @@ struct BiOp : public AST
 
 struct Num : public AST
 {
-    int value;
-    Num(INTEGER* num)  
+    NumValue v;
+    AbsToken* token;
+    Num(INTEGER_CONSTANT* num)  : token(num)
     {
-        value = num->_val;
+        v._value = num->_val;
+    }
+    Num(REAL_CONST* num)  : token(num)
+    {
+        v._dvalue = num->_val;
     }
     int accept(ASTVisitor* visitor) override {
         return visitor->VisitNum(this);
@@ -120,12 +138,61 @@ struct NoOp: public AST
     }
 };
 
+struct Program: public AST
+{
+    std::string name;
+    Block* block;
+    Compound* compound_staement;
+    Program(const string& name, Block* block) : name(name), block(block) {}
+    virtual int accept(ASTVisitor* visitor) override{
+        return visitor->VisitProgram(this);
+    }
+};
+
+struct Block: public AST
+{
+    std::vector<VarDecl*> vardecl;
+    Compound* compound_statements = nullptr;
+    Block(const std::vector<VarDecl*>& var, Compound* cs): vardecl(var), compound_statements(cs) {}
+    virtual int accept(ASTVisitor* visitor) override{
+        return visitor->VisitBlock(this);
+    }
+};
+
+struct VarDecl: public AST
+{
+    Var* var;
+    Type* type;
+    VarDecl(Var* var, Type* type): var(var), type(type) {}
+    virtual int accept(ASTVisitor* visitor) override{
+        return visitor->VisitVarDecl(this);
+    }
+};
+
+struct Type: public AST
+{
+    AbsToken* token;
+    string value;
+    Type(AbsToken* token) : token(token) {
+        if (IsSubType<INTEGER, AbsToken>(token)) {
+            value = "INTEGER";
+        } else if (IsSubType<REAL, AbsToken>(token)) {
+            value = "REAL";
+        } else {
+            value = "Illegal Type";
+        }
+    }
+    virtual int accept(ASTVisitor* visitor) override{
+        return visitor->VisitType(this);
+    }
+};
+
 #define CONSTRUCT_AST_VISTFUNC_OVERRRIDE(TYPE) \
     virtual int Visit##TYPE(TYPE* node) override
 
 struct ASTVisitValue : public ASTVisitor
 {
-    std::map<string, int> GLOBAL_SCOPE;
+    std::map<string, NumValue> GLOBAL_SCOPE;
 
     CONSTRUCT_AST_VISTFUNC_OVERRRIDE(BiOp);
     CONSTRUCT_AST_VISTFUNC_OVERRRIDE(Num);
@@ -134,6 +201,10 @@ struct ASTVisitValue : public ASTVisitor
     CONSTRUCT_AST_VISTFUNC_OVERRRIDE(Assign);
     CONSTRUCT_AST_VISTFUNC_OVERRRIDE(Var);
     CONSTRUCT_AST_VISTFUNC_OVERRRIDE(NoOp);
+    CONSTRUCT_AST_VISTFUNC_OVERRRIDE(Program);
+    CONSTRUCT_AST_VISTFUNC_OVERRRIDE(Block);
+    CONSTRUCT_AST_VISTFUNC_OVERRRIDE(VarDecl);
+    CONSTRUCT_AST_VISTFUNC_OVERRRIDE(Type);
     std::function<int(AST* b)> vis = [=](AST* b) -> int {
         if (IsSubType<BiOp, AST>(b)) {
             return VisitBiOp(dynamic_cast<BiOp*>(b));
@@ -170,6 +241,11 @@ struct ASTDraw: public ASTVisitor
     CONSTRUCT_AST_VISTFUNC_OVERRRIDE(Assign);
     CONSTRUCT_AST_VISTFUNC_OVERRRIDE(Var);
     CONSTRUCT_AST_VISTFUNC_OVERRRIDE(NoOp);
+    CONSTRUCT_AST_VISTFUNC_OVERRRIDE(Program);
+    CONSTRUCT_AST_VISTFUNC_OVERRRIDE(Block);
+    CONSTRUCT_AST_VISTFUNC_OVERRRIDE(VarDecl);
+    CONSTRUCT_AST_VISTFUNC_OVERRRIDE(Type);
+
     std::function<int(AST* b)> vis = [=](AST* b) -> int {
         if (IsSubType<BiOp, AST>(b)) {
             return VisitBiOp(dynamic_cast<BiOp*>(b));
@@ -185,6 +261,14 @@ struct ASTDraw: public ASTVisitor
             return VisitVar(dynamic_cast<Var*>(b));
         } else if (IsSubType<NoOp, AST>(b)) {
             return VisitNoOp(dynamic_cast<NoOp*>(b));
+        } else if (IsSubType<Program, AST>(b)) {
+            return VisitProgram(dynamic_cast<Program*>(b));
+        } else if (IsSubType<Block, AST>(b)) {
+            return VisitBlock(dynamic_cast<Block*>(b));
+        } else if (IsSubType<VarDecl, AST>(b)) {
+            return VisitVarDecl(dynamic_cast<VarDecl*>(b));
+        } else if (IsSubType<Type, AST>(b)) {
+            return VisitType(dynamic_cast<Type*>(b));
         }
         return 0;
     };
@@ -194,7 +278,8 @@ struct ASTDraw: public ASTVisitor
         if (IsTokenType<MUL>(abs)) { return "*"; }
         if (IsTokenType<PLUS>(abs)) { return "+"; }
         if (IsTokenType<MINUS>(abs)) { return "-"; }
-        if (IsTokenType<DIV>(abs)) { return "/"; }
+        if (IsTokenType<INTEGER_DIV>(abs)) { return "DIV"; }
+        if (IsTokenType<FLOAT_DIV>(abs)) { return "/"; }
         if (IsTokenType<ASSIGN>(abs)) { return ":="; }
         return "";
     }

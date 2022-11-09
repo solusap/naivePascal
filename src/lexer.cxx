@@ -3,6 +3,7 @@
 #include <cctype>
 #include <fmt/core.h>
 #include <execinfo.h>
+#include <string>
 
 using fmt::print;
 
@@ -21,12 +22,18 @@ void print_stacktrace()
 Lexer::Lexer(const string& str) : text(str), pos(0) { 
         reserved_id["BEGIN"] = new BEGIN();
         reserved_id["END"] = new END();
+        reserved_id["VAR"] = new VAR();
+        reserved_id["DIV"] = new INTEGER_DIV();
+        reserved_id["INTEGER"] = new INTEGER();
+        reserved_id["REAL"] = new REAL();
+        reserved_id["PROGRAM"] = new PROGRAM();
+
     };
 
 AbsToken* Lexer::Error()
 {
     print_stacktrace();
-    print("Error in parsing input text at {}, {}!\n", pos, text.at(pos));
+    print("Error in parsing input text at {}, {}!\n", pos, text.substr(pos, text.length() - pos));
     std::exit(1);
     return nullptr;
 }
@@ -38,6 +45,7 @@ AbsToken* Lexer::proc_id()
         res += text.at(pos);
         advance();
     }
+
     if (reserved_id.count(res)) {
         return reserved_id.at(res);
     }
@@ -69,6 +77,14 @@ void Lexer::skip_whitespace()
     }
 }
 
+void Lexer::skip_comment()
+{
+    while (pos != std::string::npos && text[pos] != '}') {
+        advance();
+    }
+    advance();
+}
+
 int Lexer::build_integer()
 {
     int start = pos;
@@ -84,11 +100,20 @@ AbsToken* Lexer::get_next_token()
         if (text[pos] == ' ') {
             skip_whitespace();
             continue;
+        } else if (text[pos] == '{') {
+            advance();
+            skip_comment();
+            continue;
         }
+ 
         if (std::isdigit(text[pos])) {
-            return new INTEGER(build_integer());
+            return number();
         } else if (std::isalpha(text[pos])) {
             return proc_id();
+        } else if (text[pos] == ':' && peek() == '=') {
+            advance();
+            advance();
+            return new ASSIGN();
         }
         switch(text[pos]) {
             case '+':
@@ -102,7 +127,7 @@ AbsToken* Lexer::get_next_token()
                 return new MUL();
             case '/':
                 advance();
-                return new DIV();
+                return new FLOAT_DIV();
             case '(':
                 advance();
                 return new LPAREN();
@@ -110,17 +135,17 @@ AbsToken* Lexer::get_next_token()
                 advance();
                 return new RPAREN();
             case ':':
-                if (peek() == '=') {
-                    advance();
-                    advance();
-                    return new ASSIGN();
-                }
+                advance();
+                return new COLON();
             case ';':
                 advance();
                 return new SEMI();
             case '.':
                 advance();
                 return new DOT();
+            case ',':
+                advance();
+                return new COMMA();
             case '\n':
                 advance();
                 continue;            
@@ -131,4 +156,25 @@ AbsToken* Lexer::get_next_token()
         return Error();
     }
     return new EndOfFile();
+}
+
+AbsToken* Lexer::number()
+{
+    string result_tmp = "";
+    while (pos != std::string::npos && std::isdigit(text[pos])) {
+        result_tmp += text[pos];
+        advance();
+    }
+
+    if (text[pos] == '.') {
+        result_tmp += text[pos];
+        advance();
+        while (pos != std::string::npos && std::isdigit(text[pos])) {
+            result_tmp += text[pos];
+            advance();
+        }
+        return new REAL_CONST(std::stod(result_tmp));
+    }
+    return new INTEGER_CONSTANT(std::stoi(result_tmp));
+
 }

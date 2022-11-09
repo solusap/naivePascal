@@ -16,9 +16,11 @@ public:
     AbsToken* Error();
     void advance();
     void skip_whitespace();
+    void skip_comment();
     int build_integer();
     AbsToken* get_next_token();
-    AbsToken* proc_id();    
+    AbsToken* proc_id();
+    AbsToken* number();  
 };
 
 #endif

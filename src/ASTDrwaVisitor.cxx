@@ -1,4 +1,5 @@
 #include "AST.h"
+#include "token.h"
 #include <fmt/core.h>
 
 using fmt::print;
@@ -18,7 +19,12 @@ int ASTDraw::VisitBiOp(BiOp *node) {
 
 int ASTDraw::VisitNum(Num *node) {
     int t = cnt++;
-    dot_body += format("    node{} [label=\"{}\"]\n", t, node->value);
+    if (IsSubType<REAL_CONST, AbsToken>(node->token)) {
+        dot_body += format("    node{} [label=\"{}\"]\n", t, node->v._dvalue);
+    } else {
+        dot_body += format("    node{} [label=\"{}\"]\n", t, node->v._value);
+    }
+    
     return t;
 }
 
@@ -61,5 +67,44 @@ int ASTDraw::VisitVar(Var *node) {
 int ASTDraw::VisitNoOp(NoOp *node) {
     int t = cnt++;
     dot_body += format("    node{} [label=\"NoOp\"]\n", t);
+    return t;
+}
+
+int ASTDraw::VisitProgram(Program *node) {
+    int t = cnt++;
+    dot_body += format("    node{} [label=\"Program\"]\n", t);
+    int num = vis(node->block);
+    dot_body += format("    node{}->node{}\n", t, num);
+    return t;
+}
+
+int ASTDraw::VisitBlock(Block *node) {
+    int t = cnt++;
+    dot_body += format("    node{} [label=\"Block\"]\n", t);
+    for (auto && child : node->vardecl) {
+        int num = vis(child);
+        dot_body += format("    node{}->node{}\n", t, num);
+    }
+
+    if (node->compound_statements != nullptr) {
+        int num = vis(node->compound_statements);
+        dot_body += format("    node{}->node{}\n", t, num);
+    }
+    return t;
+}
+
+int ASTDraw::VisitVarDecl(VarDecl *node) {
+    int t = cnt++;
+    dot_body += format("    node{} [label=\"VarDecl\"]\n", t);
+    int t1 = vis(node->var);
+    int t2 = vis(node->type);
+    dot_body += format("    node{}->node{}\n", t, t1);
+    dot_body += format("    node{}->node{}\n", t, t2);
+    return t;
+}
+
+int ASTDraw::VisitType(Type *node) {
+    int t = cnt++;
+    dot_body += format("    node{} [label=\"{}\"]\n", t, node->value);
     return t;
 }

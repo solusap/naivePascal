@@ -4,7 +4,7 @@
 #include <fmt/ranges.h>
 int ASTVisitValue::VisitNum(Num* num)
 {
-    return num->value;
+    return num->v._value;
 }
 
 int ASTVisitValue::VisitBiOp(BiOp* biop)
@@ -21,7 +21,7 @@ int ASTVisitValue::VisitBiOp(BiOp* biop)
     if (IsTokenType<MINUS>(biop->op)) {
         return l - r;
     }
-    if (IsTokenType<DIV>(biop->op)) {
+    if (IsTokenType<INTEGER_DIV>(biop->op)) {
         return l / r;
     }
     fmt::print("unknown operator l = {}, r = {}\n!", l, r);
@@ -42,6 +42,31 @@ int ASTVisitValue::VisitNoOp(NoOp *node)
     return 0;
 }
 
+int ASTVisitValue::VisitProgram(Program *node)
+{
+    return 0;
+}
+
+int ASTVisitValue::VisitBlock(Block *node)
+{
+    for (auto&& decl : node->vardecl) {
+        vis(decl);
+    }
+    vis(node->compound_statements);
+    return 0;
+}
+
+
+int ASTVisitValue::VisitVarDecl(VarDecl *node)
+{
+    return 0;
+}
+
+int ASTVisitValue::VisitType(Type *node)
+{
+    return 0;
+}
+
 int ASTVisitValue::VisitCompound(Compound *node)
 {
     for (auto&& p : node->children) {
@@ -53,16 +78,17 @@ int ASTVisitValue::VisitCompound(Compound *node)
 int ASTVisitValue::VisitAssign(Assign *node)
 {
     string var_name = dynamic_cast<Var*>(node->left)->value;
-    GLOBAL_SCOPE.insert({var_name, vis(node->right)});
+    // GLOBAL_SCOPE.insert({var_name, vis(node->right)});
     return 0;
 }
 
 int ASTVisitValue::VisitVar(Var *node)
 {    
     if (GLOBAL_SCOPE.count(node->value) == 0) {
-        fmt::print("var {} undefined!\n", node->value);
+        // fmt::print("var {} undefined!\n", node->value);
         exit(1);
     }
     
-    return GLOBAL_SCOPE.at(node->value);;
+    // return GLOBAL_SCOPE.at(node->value);;
+    return 0;
 }
