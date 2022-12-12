@@ -284,4 +284,137 @@ struct ASTDraw: public ASTVisitor
         return "";
     }
 };
+
+struct Symbol
+{
+    string name;
+    string type;
+    Symbol(const string& name, const string& type) :
+        name(name), type(type) {
+        }
+    virtual string tostring() {
+        string tmp ="<" + this->name + ":" + this->type  + ">";
+        return tmp; 
+    };
+};
+
+struct BuiltinTypeSymbol :public Symbol
+{
+    BuiltinTypeSymbol(const string& name) :
+        Symbol{"", name} {}
+    
+    virtual string tostring()
+    {
+        return this->type;
+    }
+};
+
+struct VarSymbol :public Symbol
+{
+    Symbol* type_symbol;
+    VarSymbol(const string& name, const string& type) : 
+        Symbol{name, type}, type_symbol(nullptr) {}
+    
+    VarSymbol(const string& name, Symbol* type_symbol) : 
+      Symbol{name, type_symbol->type}, type_symbol(type_symbol) {}
+    
+    virtual string tostring()
+    {
+        string tmp ="<" + this->name + ":" + this->type  + ">";
+        return tmp;
+    }
+};
+
+struct SymbolTable
+{
+    std::map<string, Symbol*> _symbols;
+    SymbolTable() {
+        Symbol* symInt = dynamic_cast<Symbol*>(new BuiltinTypeSymbol("INTEGER"));
+        _symbols.insert({"INTEGER", symInt});
+        Symbol* symReal = dynamic_cast<Symbol*>(new BuiltinTypeSymbol("REAL"));
+        _symbols.insert({"REAL", symReal});
+    }
+
+    string tostring()
+    {
+        string tmp = "Symbols: [";
+        for (auto&& i : _symbols) {
+            tmp += i.first;
+            tmp += ", ";
+            tmp += i.second->tostring();
+        }
+        tmp += "]";
+        return tmp;
+    }
+    
+    void define(Symbol* symbol)
+    {
+        this->_symbols[symbol->name] = symbol;
+    }
+    Symbol* lookup(const string& name)
+    {
+        if (this->_symbols.count(name) == 0) {
+            return nullptr;
+        }
+        auto sym = this->_symbols.at(name);
+        return sym;
+    }
+};
+
+struct SymbolTableBuilder: public ASTVisitor
+{
+    SymbolTable symtab;
+    // SymbolTableBuilder()
+    // {
+    //     symtab.define(new BuiltinTypeSymbol("INTEGER"));
+    //     symtab.define(new BuiltinTypeSymbol("REAL"));
+    // }
+    CONSTRUCT_AST_VISTFUNC_OVERRRIDE(BiOp);
+    CONSTRUCT_AST_VISTFUNC_OVERRRIDE(Num);
+    CONSTRUCT_AST_VISTFUNC_OVERRRIDE(UnaryOp);
+    CONSTRUCT_AST_VISTFUNC_OVERRRIDE(Compound);
+    CONSTRUCT_AST_VISTFUNC_OVERRRIDE(Assign);
+    CONSTRUCT_AST_VISTFUNC_OVERRRIDE(Var);
+    CONSTRUCT_AST_VISTFUNC_OVERRRIDE(NoOp);
+    CONSTRUCT_AST_VISTFUNC_OVERRRIDE(Program);
+    CONSTRUCT_AST_VISTFUNC_OVERRRIDE(Block);
+    CONSTRUCT_AST_VISTFUNC_OVERRRIDE(VarDecl);
+    CONSTRUCT_AST_VISTFUNC_OVERRRIDE(Type);
+
+    std::function<int(AST* b)> vis = [=](AST* b) -> int {
+        if (IsSubType<BiOp, AST>(b)) {
+            return VisitBiOp(dynamic_cast<BiOp*>(b));
+        } else if (IsSubType<Num, AST>(b)) {
+            return VisitNum(dynamic_cast<Num*>(b));
+        } else if (IsSubType<Compound, AST>(b)) {
+            return VisitCompound(dynamic_cast<Compound*>(b));
+        } else if (IsSubType<UnaryOp, AST>(b)) {
+            return VisitUnaryOp(dynamic_cast<UnaryOp*>(b));
+        } else if (IsSubType<Assign, AST>(b)) {
+            return VisitAssign(dynamic_cast<Assign*>(b));
+        } else if (IsSubType<Var, AST>(b)) {
+            return VisitVar(dynamic_cast<Var*>(b));
+        } else if (IsSubType<NoOp, AST>(b)) {
+            return VisitNoOp(dynamic_cast<NoOp*>(b));
+        } else if (IsSubType<Program, AST>(b)) {
+            return VisitProgram(dynamic_cast<Program*>(b));
+        } else if (IsSubType<Block, AST>(b)) {
+            return VisitBlock(dynamic_cast<Block*>(b));
+        } else if (IsSubType<VarDecl, AST>(b)) {
+            return VisitVarDecl(dynamic_cast<VarDecl*>(b));
+        } else if (IsSubType<Type, AST>(b)) {
+            return VisitType(dynamic_cast<Type*>(b));
+        }
+        return 0;
+    };
+    string GetOp(AbsToken *abs) {
+        if (IsTokenType<MUL>(abs)) { return "*"; }
+        if (IsTokenType<PLUS>(abs)) { return "+"; }
+        if (IsTokenType<MINUS>(abs)) { return "-"; }
+        if (IsTokenType<INTEGER_DIV>(abs)) { return "DIV"; }
+        if (IsTokenType<FLOAT_DIV>(abs)) { return "/"; }
+        if (IsTokenType<ASSIGN>(abs)) { return ":="; }
+        return "";
+    }
+};
 #endif

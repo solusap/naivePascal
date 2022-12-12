@@ -87,8 +87,33 @@ END.  {Part10AST})";
 
 }
 
+void test_SymTab()
+{
+    string p1 = R"(PROGRAM Part11;
+VAR
+   x : INTEGER;
+   y : REAL;
+
+BEGIN
+
+END.)";
+Parser parser{p1};
+    auto tree = parser.parse();
+    SymbolTableBuilder visitor;
+    visitor.vis(tree);
+    for (auto&& p : visitor.symtab._symbols) {
+        auto typePtr = dynamic_cast<VarSymbol*>(p.second);
+        if (typePtr != nullptr) {
+            auto type = typePtr->type_symbol->type;
+            fmt::print("var is {}, type is {}\n", p.first, type);
+        }
+        
+    }
+}
+
 int main()
 {
     // test1();
-    test_draw2();
+    // test_draw2();
+    test_SymTab();
 }

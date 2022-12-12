@@ -14,7 +14,7 @@ add_executable(interpreter
 
 target_compile_options(interpreter PUBLIC
     -g
-    -O1
+    -O0
     #-fsanitize=address
     -fno-omit-frame-pointer
     -Wall
