@@ -47,6 +47,11 @@ int ASTVisitValue::VisitProgram(Program *node)
     return 0;
 }
 
+int ASTVisitValue::VisitProcedureDecl(ProcedureDecl *node)
+{
+    return 0;
+}
+
 int ASTVisitValue::VisitBlock(Block *node)
 {
     for (auto&& decl : node->vardecl) {

@@ -20,6 +20,7 @@ struct Program;
 struct Block;
 struct VarDecl;
 struct Type;
+struct ProcedureDecl;
 
 union NumValue {
     int _value;
@@ -55,6 +56,7 @@ struct ASTVisitor
     CONSTRUCT_AST_VISTFUNC(Block);
     CONSTRUCT_AST_VISTFUNC(VarDecl);
     CONSTRUCT_AST_VISTFUNC(Type);
+    CONSTRUCT_AST_VISTFUNC(ProcedureDecl);
 };
 
 struct BiOp : public AST
@@ -151,9 +153,9 @@ struct Program: public AST
 
 struct Block: public AST
 {
-    std::vector<VarDecl*> vardecl;
+    std::vector<AST*> vardecl;
     Compound* compound_statements = nullptr;
-    Block(const std::vector<VarDecl*>& var, Compound* cs): vardecl(var), compound_statements(cs) {}
+    Block(const std::vector<AST*>& var, Compound* cs): vardecl(var), compound_statements(cs) {}
     virtual int accept(ASTVisitor* visitor) override{
         return visitor->VisitBlock(this);
     }
@@ -187,6 +189,18 @@ struct Type: public AST
     }
 };
 
+struct ProcedureDecl: public AST
+{
+    AST* block_node;
+    string proc_name;
+    ProcedureDecl(const string& proc_name, AST* block_node):
+        block_node(block_node), proc_name(proc_name)
+    {    }
+    virtual int accept(ASTVisitor* visitor) override{
+        return visitor->VisitProcedureDecl(this);
+    }
+};
+
 #define CONSTRUCT_AST_VISTFUNC_OVERRRIDE(TYPE) \
     virtual int Visit##TYPE(TYPE* node) override
 
@@ -205,6 +219,7 @@ struct ASTVisitValue : public ASTVisitor
     CONSTRUCT_AST_VISTFUNC_OVERRRIDE(Block);
     CONSTRUCT_AST_VISTFUNC_OVERRRIDE(VarDecl);
     CONSTRUCT_AST_VISTFUNC_OVERRRIDE(Type);
+    CONSTRUCT_AST_VISTFUNC_OVERRRIDE(ProcedureDecl);
     std::function<int(AST* b)> vis = [=](AST* b) -> int {
         if (IsSubType<BiOp, AST>(b)) {
             return VisitBiOp(dynamic_cast<BiOp*>(b));
@@ -245,6 +260,7 @@ struct ASTDraw: public ASTVisitor
     CONSTRUCT_AST_VISTFUNC_OVERRRIDE(Block);
     CONSTRUCT_AST_VISTFUNC_OVERRRIDE(VarDecl);
     CONSTRUCT_AST_VISTFUNC_OVERRRIDE(Type);
+    CONSTRUCT_AST_VISTFUNC_OVERRRIDE(ProcedureDecl);
 
     std::function<int(AST* b)> vis = [=](AST* b) -> int {
         if (IsSubType<BiOp, AST>(b)) {
@@ -269,6 +285,8 @@ struct ASTDraw: public ASTVisitor
             return VisitVarDecl(dynamic_cast<VarDecl*>(b));
         } else if (IsSubType<Type, AST>(b)) {
             return VisitType(dynamic_cast<Type*>(b));
+        } else if (IsSubType<ProcedureDecl, AST>(b)) {
+            return VisitProcedureDecl(dynamic_cast<ProcedureDecl*>(b));
         }
         return 0;
     };
@@ -380,6 +398,7 @@ struct SymbolTableBuilder: public ASTVisitor
     CONSTRUCT_AST_VISTFUNC_OVERRRIDE(Block);
     CONSTRUCT_AST_VISTFUNC_OVERRRIDE(VarDecl);
     CONSTRUCT_AST_VISTFUNC_OVERRRIDE(Type);
+    CONSTRUCT_AST_VISTFUNC_OVERRRIDE(ProcedureDecl);
 
     std::function<int(AST* b)> vis = [=](AST* b) -> int {
         if (IsSubType<BiOp, AST>(b)) {
@@ -404,6 +423,8 @@ struct SymbolTableBuilder: public ASTVisitor
             return VisitVarDecl(dynamic_cast<VarDecl*>(b));
         } else if (IsSubType<Type, AST>(b)) {
             return VisitType(dynamic_cast<Type*>(b));
+        } else if (IsSubType<Type, AST>(b)) {
+            return VisitProcedureDecl(dynamic_cast<ProcedureDecl*>(b));
         }
         return 0;
     };

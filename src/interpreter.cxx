@@ -97,7 +97,27 @@ VAR
 BEGIN
 
 END.)";
-Parser parser{p1};
+string textError1 = R"(PROGRAM NameError1;
+VAR
+   a : INTEGER;
+
+BEGIN
+   a := 2 + b;
+END.)";
+
+string text2 = R"(PROGRAM Part11;
+VAR
+   number : INTEGER;
+   a, b   : INTEGER;
+   y      : REAL;
+
+BEGIN {Part11}
+   number := 2;
+   a := number ;
+   b := 10 * a + 10 * number DIV 4;
+   y := 20 / 7 + 3.14
+END.  {Part11})";
+Parser parser{text2};
     auto tree = parser.parse();
     SymbolTableBuilder visitor;
     visitor.vis(tree);
@@ -107,13 +127,47 @@ Parser parser{p1};
             auto type = typePtr->type_symbol->type;
             fmt::print("var is {}, type is {}\n", p.first, type);
         }
-        
     }
+}
+
+void test_draw3()
+{
+    string text = R"(PROGRAM Part12;
+VAR
+   a : INTEGER;
+
+PROCEDURE P1;
+VAR
+   a : REAL;
+   k : INTEGER;
+
+   PROCEDURE P2;
+   VAR
+      a, z : INTEGER;
+   BEGIN {P2}
+      z := 777;
+   END;  {P2}
+
+BEGIN {P1}
+
+END;  {P1}
+
+BEGIN {Part12}
+   a := 10;
+END.  {Part12})";
+    Parser parser{text};
+    auto tree = parser.parse();
+    ASTDraw visitor;
+    visitor.vis(tree);
+    visitor.dot_body += "}";
+    fmt::print("{}\n", visitor.dot_body);
+
 }
 
 int main()
 {
     // test1();
     // test_draw2();
-    test_SymTab();
+    // test_SymTab();
+    test_draw3();
 }

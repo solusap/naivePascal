@@ -108,3 +108,12 @@ int ASTDraw::VisitType(Type *node) {
     dot_body += format("    node{} [label=\"{}\"]\n", t, node->value);
     return t;
 }
+
+int ASTDraw::VisitProcedureDecl(ProcedureDecl *node) {
+    int t = cnt++;
+    dot_body += format("    node{} [label= \"Procedure:{}\"]\n", t, node->proc_name);
+
+    int t1 = vis(node->block_node);
+    dot_body += format("    node{}->node{}", t, t1);
+    return t;
+}

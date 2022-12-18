@@ -28,7 +28,7 @@ struct Parser
     AST* expr();
     AST* parse();
     AST* block();
-    std::vector<VarDecl*> declarations();
+    std::vector<AST*> declarations();
     std::vector<VarDecl*> variable_declaration();
     Type* type_spec();
 };

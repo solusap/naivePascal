@@ -192,9 +192,9 @@ AST* Parser::block()
                      dynamic_cast<Compound*>(compound_statement()));
 }
 
-std::vector<VarDecl*> Parser::declarations()
+std::vector<AST*> Parser::declarations()
 {
-    std::vector<VarDecl*> decls;
+    std::vector<AST*> decls;
     if (IsTokenType<VAR>(curToken)) {
         eat<VAR>();
         while (IsTokenType<ID>(curToken)) {
@@ -204,6 +204,16 @@ std::vector<VarDecl*> Parser::declarations()
             }
             eat<SEMI>();
         }
+    }
+    if (IsTokenType<PROCEDURE>(curToken)) {
+        eat<PROCEDURE>();
+        auto proc_name = dynamic_cast<ID*>(this->curToken)->id;
+        eat<ID>();
+        eat<SEMI>();
+        AST* block_node = block();
+        AST* proc_decl = new ProcedureDecl(proc_name, block_node);
+        decls.push_back(proc_decl);
+        eat<SEMI>();
     }
     return decls;
 }

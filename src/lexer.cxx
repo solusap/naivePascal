@@ -27,7 +27,7 @@ Lexer::Lexer(const string& str) : text(str), pos(0) {
         reserved_id["INTEGER"] = new INTEGER();
         reserved_id["REAL"] = new REAL();
         reserved_id["PROGRAM"] = new PROGRAM();
-
+        reserved_id["PROCEDURE"] = new PROCEDURE();
     };
 
 AbsToken* Lexer::Error()
